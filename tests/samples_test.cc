@@ -3,6 +3,7 @@
 #include "gpr925/scalar.h"
 
 #include "main/samples/01_hello.h"
+#include "main/samples/02_planet.h"
 #include "main/samples/sample.h"
 #include "main/samples/sample_config.h"
 
@@ -126,6 +127,63 @@ TEST(HelloSample, APressChangesThePlayerColorOnce) {
   draw_list.Clear();
   sample.Draw(draw_list);
   EXPECT_EQ(draw_list.circles.back().color, initial + 1);
+  sample.End();
+}
+
+TEST(PlanetSample, Draws128ScatteredPlanetsWithoutCenterOrOrbitLines) {
+  const SampleContext context{sample_config::kWorldBounds};
+  PlanetSample sample;
+  sample.Begin(context);
+  DrawList draw_list;
+  sample.Draw(draw_list);
+  ASSERT_EQ(draw_list.circles.size(), 128u);
+  EXPECT_TRUE(draw_list.lines.empty());
+  const Vec2 first_position = draw_list.circles[0].center;
+  const Vec2 second_position = draw_list.circles[1].center;
+  EXPECT_NE(first_position, second_position);
+  EXPECT_NE((first_position - context.world_bounds.Center()).Magnitude(),
+            (second_position - context.world_bounds.Center()).Magnitude());
+  sample.End();
+}
+
+TEST(PlanetSample, PlanetsOrbitAtDifferentDistances) {
+  const SampleContext context{sample_config::kWorldBounds};
+  PlanetSample sample;
+  sample.Begin(context);
+  DrawList initial;
+  DrawList moved;
+  sample.Draw(initial);
+  for (int step = 0; step < 60; ++step) {
+    sample.FixedUpdate({});
+  }
+  sample.Draw(moved);
+  for (std::size_t i = 0; i < initial.circles.size(); ++i) {
+    EXPECT_NE(initial.circles[i].center, moved.circles[i].center);
+  }
+  sample.End();
+}
+
+TEST(PlanetSample, APressPausesAndBRestartsThePlanets) {
+  const SampleContext context{sample_config::kWorldBounds};
+  PlanetSample sample;
+  sample.Begin(context);
+  DrawList initial;
+  DrawList after_pause;
+  DrawList after_reset;
+  sample.Draw(initial);
+  const std::uint8_t a = ButtonMask(Button::kA);
+  const Input press_a = Input::FromHeld(a, 0);
+  const Input held_a = Input::FromHeld(a, a);
+  sample.FixedUpdate(press_a);
+  for (int step = 0; step < 30; ++step) {
+    sample.FixedUpdate(held_a);
+  }
+  sample.Draw(after_pause);
+  EXPECT_EQ(initial.circles[0].center, after_pause.circles[0].center);
+
+  sample.FixedUpdate(Input::FromHeld(ButtonMask(Button::kB), 0));
+  sample.Draw(after_reset);
+  EXPECT_EQ(initial.circles[0].center, after_reset.circles[0].center);
   sample.End();
 }
 

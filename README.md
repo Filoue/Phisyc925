@@ -106,8 +106,8 @@ EngineLib accepts user-defined number types, replace it in
 
 ## Add a sample
 
-1. Copy `main/samples/01_hello.h` and `.cc` to `02_my_sample.h` and `.cc`,
-   and rename the class.
+1. Copy a sample's `.h` and `.cc` files to the next available numbered files
+   (for example, `03_my_sample.h` and `.cc`), and rename the class.
 2. Put its sizes for each platform in `main/samples/sample_config.h`.
 3. Register it in the `SampleRegistry` constructor in
    `main/samples/sample.cc`.
@@ -115,6 +115,10 @@ EngineLib accepts user-defined number types, replace it in
 
 There is nothing to change in `main/sdl` or `nds`. See the documentation of
 `Sample` in `main/samples/sample.h` for the rules.
+
+The `02 Planet` sample shows 128 little planets scattered around an invisible
+center. They circle at varied distances but at the same angular speed, with no
+drawn orbit paths. Press A to pause or resume them, and B to restart.
 
 On the DS, at most 128 small shapes (circles up to 32 px of radius, boxes up
 to 64x64 px) are hardware sprites; extra ones are dropped. Bigger shapes and

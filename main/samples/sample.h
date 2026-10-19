@@ -55,9 +55,10 @@ struct SampleContext {
 ///
 /// How to add a new sample:
 ///
-/// 1. Copy `main/samples/01_hello.h` and `.cc` to `02_my_sample.h` and `.cc`
-///    and rename the class. Every file of `main/samples/` is compiled into
-///    the `Gpr925Samples` library, so the PC host and the DS ROM both get it.
+/// 1. Copy a sample's `.h` and `.cc` files to the next available numbered
+///    sample files and rename the class. Every file of `main/samples/` is
+///    compiled into the `Gpr925Samples` library, so the PC host and DS ROM
+///    both get it.
 /// 2. Put its per-platform sizes in @ref sample_config and check that the
 ///    @ref DrawList capacities (@ref sample_config::kMaxDrawCircles...) fit.
 /// 3. Register it in the @ref SampleRegistry constructor in
