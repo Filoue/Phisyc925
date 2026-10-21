@@ -15,5 +15,9 @@ vcpkg_installed/
 compile_commands.json
 **/.DS_Store
 
+# sample templates
+main/samples/sample_template.cc
+main/samples/sample_template.h
+
 # Written by the PC sample host next to where it is run
 imgui.ini
