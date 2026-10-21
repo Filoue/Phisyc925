@@ -11,12 +11,6 @@
 
 namespace gpr925 {
 
-/// Sample 02: many small planets orbit a black hole at varied distances.
-///
-/// - The planets start at scattered angles and distances, then rotate at the
-///   same angular speed.
-/// - A pauses and resumes the planets.
-/// - B restarts them at their initial positions.
 class PlanetSample : public Sample {
  public:
   /// Creates the planets around a black hole in the middle of the world.
