@@ -13,11 +13,11 @@ namespace gpr925 {
 
 class PlanetSample : public Sample {
  public:
-  /// Creates the planets around a black hole in the middle of the world.
+  /// Creates the planets.
   void Begin(const SampleContext& context) override;
-  /// Advances the planets around the sun by one fixed step.
+  /// Advances the planets around by one fixed step.
   void FixedUpdate(const Input& input) override;
-  /// Draws the black hole and planets without fixed orbit paths.
+  /// Draws the planets without fixed orbit paths.
   void Draw(DrawList& draw_list) const override;
   /// Clears the planets and pause state.
   void End() override;
@@ -27,6 +27,7 @@ class PlanetSample : public Sample {
 
   struct Planet {
     Vec2 position{};
+    Vec2 direction{};
     Scalar orbit_radius{};
     Scalar radius{};
     ColorId color = sample_color::kWhite;
@@ -41,6 +42,6 @@ class PlanetSample : public Sample {
   bool paused_ = false;
 };
 
-}  // namespace gpr925
+}
 
 #endif  // MAIN_SAMPLES_02_PLANET_H_

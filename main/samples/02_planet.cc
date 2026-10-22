@@ -9,51 +9,35 @@ namespace {
 
 constexpr std::uint8_t kAngleSteps = 64;
 constexpr std::uint8_t kAngularSpeed = 1;
-constexpr std::uint32_t kSeed = 0xB1AC0FFEu;
+constexpr std::uint32_t kSeed = 1234;
 constexpr Scalar kMinOrbitFraction = Ratio(8, 100);
 constexpr Scalar kMaxOrbitFraction = Ratio(44, 100);
-constexpr std::array<Vec2, 17> kQuarterCircle = {{
-    {ToScalar(1), Scalar{}},
-    {Ratio(9952, 10000), Ratio(980, 10000)},
-    {Ratio(9808, 10000), Ratio(1951, 10000)},
-    {Ratio(9569, 10000), Ratio(2903, 10000)},
-    {Ratio(9239, 10000), Ratio(3827, 10000)},
-    {Ratio(8819, 10000), Ratio(4714, 10000)},
-    {Ratio(8315, 10000), Ratio(5556, 10000)},
-    {Ratio(7730, 10000), Ratio(6344, 10000)},
-    {Ratio(7071, 10000), Ratio(7071, 10000)},
-    {Ratio(6344, 10000), Ratio(7730, 10000)},
-    {Ratio(5556, 10000), Ratio(8315, 10000)},
-    {Ratio(4714, 10000), Ratio(8819, 10000)},
-    {Ratio(3827, 10000), Ratio(9239, 10000)},
-    {Ratio(2903, 10000), Ratio(9569, 10000)},
-    {Ratio(1951, 10000), Ratio(9808, 10000)},
-    {Ratio(980, 10000), Ratio(9952, 10000)},
-    {Scalar{}, ToScalar(1)},
-}};
+constexpr Scalar kStepCos = Scalar{0.9951847f};
+constexpr Scalar kStepSin = Scalar{0.0980171f};
 
 constexpr Vec2 Scale(Vec2 vector, Scalar scale) {
   return vector * Vec2{scale, scale};
 }
 
-constexpr Vec2 DirectionAt(std::uint8_t phase) {
-  phase = static_cast<std::uint8_t>(phase % kAngleSteps);
-  if (phase <= 16) {
-    return kQuarterCircle[phase];
-  }
-  if (phase <= 32) {
-    const Vec2 direction = kQuarterCircle[phase - 16];
-    return {-direction.y, direction.x};
-  }
-  if (phase <= 48) {
-    const Vec2 direction = kQuarterCircle[phase - 32];
-    return {-direction.x, -direction.y};
-  }
-  const Vec2 direction = kQuarterCircle[phase - 48];
-  return {direction.y, -direction.x};
+constexpr Vec2 RotateOneStep(Vec2 direction) {
+  return {direction.x * kStepCos - direction.y * kStepSin,
+          direction.x * kStepSin + direction.y * kStepCos};
 }
 
-}  // namespace
+Vec2 Normalize(Vec2 direction) {
+  const Scalar length = Sqrt(direction.SqrMagnitude());
+  return {direction.x / length, direction.y / length};
+}
+
+constexpr Vec2 DirectionAt(std::uint8_t phase) {
+  Vec2 direction{ToScalar(1), Scalar{}};
+  for (std::uint8_t step = 0; step < phase; ++step) {
+    direction = RotateOneStep(direction);
+  }
+  return Normalize(direction);
+}
+
+}
 
 void PlanetSample::Begin(const SampleContext& context) {
   bounds_ = context.world_bounds;
@@ -78,8 +62,12 @@ void PlanetSample::FixedUpdate(const Input& input) {
   for (Planet& planet : planets_) {
     planet.phase = static_cast<std::uint8_t>(
         (planet.phase + kAngularSpeed) % kAngleSteps);
+    planet.direction = RotateOneStep(planet.direction);
+    if (planet.phase == 0) {
+      planet.direction = Normalize(planet.direction);
+    }
     planet.position = center_ +
-                      Scale(DirectionAt(planet.phase), planet.orbit_radius);
+                      Scale(planet.direction, planet.orbit_radius);
   }
 }
 
@@ -103,10 +91,11 @@ void PlanetSample::ResetPlanets() {
   for (Planet& planet : planets_) {
     planet.orbit_radius = rng.Range(min_radius, max_radius);
     planet.phase = static_cast<std::uint8_t>(rng.Range(0, kAngleSteps - 1));
+    planet.direction = DirectionAt(planet.phase);
     planet.radius = Ratio(1, 10);
     planet.color = rng.RandomColor();
     planet.position =
-        center_ + Scale(DirectionAt(planet.phase), planet.orbit_radius);
+        center_ + Scale(planet.direction, planet.orbit_radius);
   }
 }
 
