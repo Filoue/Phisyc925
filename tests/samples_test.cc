@@ -4,6 +4,7 @@
 
 #include "main/samples/01_hello.h"
 #include "main/samples/02_planet.h"
+#include "main/samples/03_planetFourVec2.h"
 #include "main/samples/sample.h"
 #include "main/samples/sample_config.h"
 
@@ -184,6 +185,61 @@ TEST(PlanetSample, APressPausesAndBRestartsThePlanets) {
   sample.FixedUpdate(Input::FromHeld(ButtonMask(Button::kB), 0));
   sample.Draw(after_reset);
   EXPECT_EQ(initial.circles[0].center, after_reset.circles[0].center);
+  sample.End();
+}
+
+TEST(PlanetFourVec2, Draws128PlanetsAndMovesThemWithGravity) {
+  const SampleContext context{sample_config::kWorldBounds};
+  PlanetFourVec2 sample;
+  sample.Begin(context);
+  DrawList initial;
+  DrawList moved;
+  sample.Draw(initial);
+  ASSERT_EQ(initial.circles.size(), 128u);
+  EXPECT_TRUE(initial.lines.empty());
+
+  sample.FixedUpdate({});
+  sample.Draw(moved);
+  ASSERT_EQ(moved.circles.size(), initial.circles.size());
+  for (std::size_t i = 0; i < initial.circles.size(); ++i) {
+    EXPECT_NE(initial.circles[i].center, moved.circles[i].center);
+  }
+  sample.End();
+}
+
+TEST(PlanetFourVec2, ResetRecreatesTheSameInitialState) {
+  const SampleContext context{sample_config::kWorldBounds};
+  PlanetFourVec2 sample;
+  sample.Begin(context);
+  DrawList initial;
+  DrawList reset;
+  sample.Draw(initial);
+  sample.FixedUpdate(Input::FromHeld(ButtonMask(Button::kB), 0));
+  sample.Draw(reset);
+  ASSERT_EQ(reset.circles.size(), initial.circles.size());
+  for (std::size_t i = 0; i < initial.circles.size(); ++i) {
+    EXPECT_EQ(initial.circles[i].center, reset.circles[i].center);
+    EXPECT_EQ(initial.circles[i].color, reset.circles[i].color);
+  }
+  sample.End();
+}
+
+TEST(PlanetFourVec2, PlanetsStayWithinTheWorldDuringGravitySimulation) {
+  const SampleContext context{sample_config::kWorldBounds};
+  PlanetFourVec2 sample;
+  sample.Begin(context);
+  for (int step = 0; step < kStepCount; ++step) {
+    sample.FixedUpdate({});
+  }
+  DrawList draw_list;
+  sample.Draw(draw_list);
+  ASSERT_EQ(draw_list.circles.size(), 128u);
+  for (std::size_t i = 0; i < draw_list.circles.size(); ++i) {
+    const Vec2 position = draw_list.circles[i].center;
+    EXPECT_TRUE(IsInside(position, context.world_bounds, Ratio(1, 10)))
+        << "planet " << i << " at " << ToFloat(position.x) << ", "
+        << ToFloat(position.y);
+  }
   sample.End();
 }
 
