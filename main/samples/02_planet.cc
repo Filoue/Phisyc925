@@ -22,7 +22,7 @@ struct NumberTraits<gpr925::Fixed> {
   }
 };
 
-}  // namespace maths
+}
 
 namespace gpr925 {
 namespace {
