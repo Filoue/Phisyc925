@@ -45,7 +45,7 @@
       "displayName": "Nintendo DS samples ROM (devkitARM, needs DEVKITPRO)",
       "generator": "Ninja",
       "binaryDir": "${sourceDir}/build/${presetName}",
-      "toolchainFile": "$env{DEVKITPRO}/cmake/NDS.cmake",
+      "toolchainFile": "${sourceDir}/cmake/NdsToolchain.cmake",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release",
         "USE_SAMPLES": "OFF",

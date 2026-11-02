@@ -1,28 +1,10 @@
 #include "main/samples/02_planet.h"
 
+#include "gpr925/engine_lib_number_traits.h"
 #include "gpr925/scalar.h"
 #include "vector2.h"
 
 #include "main/samples/sample_rng.h"
-
-namespace maths {
-
-template <>
-struct NumberTraits<gpr925::Fixed> {
-  static constexpr bool kIsExact = true;
-  static constexpr gpr925::Fixed kEpsilon{};
-
-  [[nodiscard]] static constexpr gpr925::Fixed Sqrt(
-      gpr925::Fixed value) noexcept {
-    return gpr925::Sqrt(value);
-  }
-  [[nodiscard]] static constexpr gpr925::Fixed Abs(
-      gpr925::Fixed value) noexcept {
-    return gpr925::Abs(value);
-  }
-};
-
-}
 
 namespace gpr925 {
 namespace {

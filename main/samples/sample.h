@@ -45,7 +45,8 @@ struct SampleContext {
 ///
 /// Rules that keep a sample portable:
 ///
-/// - Use @ref Scalar and @ref Vec2, never `float` directly: on the DS,
+/// - Use @ref Scalar for numbers and @ref Vec2 or EngineLib's
+///   `maths::Vector2<Scalar>` for vectors, never `float` directly: on the DS,
 ///   @ref Scalar is the fixed-point @ref Fixed. Write constants with @ref Ratio
 ///   or as `constexpr Scalar` values.
 /// - Read sizes and object counts from @ref sample_config, never hard-code a

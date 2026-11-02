@@ -5,6 +5,7 @@
 #include "main/samples/01_hello.h"
 #include "main/samples/02_planet.h"
 #include "main/samples/03_planetFourVec2.h"
+#include "main/samples/04_trigger.h"
 #include "main/samples/sample.h"
 #include "main/samples/sample_config.h"
 
@@ -240,6 +241,140 @@ TEST(PlanetFourVec2, PlanetsStayWithinTheWorldDuringGravitySimulation) {
         << "planet " << i << " at " << ToFloat(position.x) << ", "
         << ToFloat(position.y);
   }
+  sample.End();
+}
+
+TEST(PhysicsWorld, ResolvesBallCollisionsAndReportsNewContacts) {
+  PhysicsWorld world;
+  world.SetBounds({{Scalar{}, Scalar{}},
+                   {ToScalar(10), ToScalar(10)}});
+  world.AddBody({ToScalar(4), ToScalar(5)}, {ToScalar(1), Scalar{}},
+                Ratio(1, 2), ToScalar(1));
+  world.AddBody({ToScalar(6), ToScalar(5)}, {-ToScalar(1), Scalar{}},
+                Ratio(1, 2), ToScalar(1));
+
+  world.Step(Ratio(1, 2));
+  world.Step(Ratio(1, 2));
+  ASSERT_EQ(world.body_count(), 2u);
+  EXPECT_TRUE(world.body(0).contact_started);
+  EXPECT_TRUE(world.body(1).contact_started);
+  EXPECT_LT(world.body(0).velocity.x(), Scalar{});
+  EXPECT_GT(world.body(1).velocity.x(), Scalar{});
+
+  world.Step(Ratio(1, 60));
+  EXPECT_FALSE(world.body(0).contact_started);
+  EXPECT_FALSE(world.body(1).contact_started);
+}
+
+TEST(PhysicsWorld, GravityAndBoundsAffectBodyMotion) {
+  PhysicsWorld world;
+  world.SetBounds({{Scalar{}, Scalar{}},
+                   {ToScalar(10), ToScalar(10)}});
+  world.SetGravity({Scalar{}, ToScalar(1)});
+  world.AddBody({ToScalar(5), Ratio(97, 10)},
+                {Scalar{}, ToScalar(2)}, Ratio(1, 2), ToScalar(1));
+
+  world.Step(Ratio(1, 10));
+
+  EXPECT_EQ(world.body(0).position.y(), Ratio(19, 2));
+  EXPECT_LT(world.body(0).velocity.y(), Scalar{});
+}
+
+TEST(PhysicsWorld, ForcesAccumulateUntilTheNextStep) {
+  PhysicsWorld world;
+  const std::size_t body =
+      world.AddBody({}, {}, Ratio(1, 2), ToScalar(2));
+  world.ApplyForce(body, {ToScalar(4), Scalar{}});
+  world.Step(Ratio(1, 2));
+  EXPECT_EQ(world.body(body).velocity.x(), ToScalar(1));
+  EXPECT_EQ(world.body(body).position.x(), Ratio(1, 2));
+
+  world.Step(Ratio(1, 2));
+  EXPECT_EQ(world.body(body).velocity.x(), ToScalar(1));
+  EXPECT_EQ(world.body(body).position.x(), ToScalar(1));
+}
+
+TEST(PhysicsWorld, ImpulsesAndStaticBodiesWorkWithoutWorldBounds) {
+  PhysicsWorld world;
+  const std::size_t obstacle =
+      world.AddStaticBody({ToScalar(6), ToScalar(5)}, ToScalar(1));
+  const std::size_t ball =
+      world.AddBody({ToScalar(3), ToScalar(5)}, {ToScalar(2), Scalar{}},
+                    ToScalar(1), ToScalar(1));
+  world.ApplyImpulse(ball, {ToScalar(1), Scalar{}});
+  world.ApplyImpulse(obstacle, {ToScalar(100), Scalar{}});
+  world.Step(ToScalar(1));
+
+  EXPECT_EQ(world.body(obstacle).position.x(), ToScalar(6));
+  EXPECT_EQ(world.body(obstacle).velocity.x(), Scalar{});
+  EXPECT_LT(world.body(ball).velocity.x(), Scalar{});
+  EXPECT_TRUE(world.body(obstacle).contact_started);
+  EXPECT_TRUE(world.body(ball).contact_started);
+}
+
+TEST(PhysicsWorld, BallTriggersDetectEachOtherWithoutChangingVelocity) {
+  PhysicsWorld world;
+  const std::size_t first =
+      world.AddTriggerBody({Scalar{}, ToScalar(5)}, {ToScalar(2), Scalar{}},
+                           ToScalar(1));
+  const std::size_t second =
+      world.AddTriggerBody({ToScalar(3), ToScalar(5)}, {-ToScalar(2), Scalar{}},
+                           ToScalar(1));
+
+  world.Step(Ratio(1, 2));
+
+  EXPECT_EQ(world.body(first).position.x(), ToScalar(1));
+  EXPECT_EQ(world.body(second).position.x(), ToScalar(2));
+  EXPECT_EQ(world.body(first).velocity.x(), ToScalar(2));
+  EXPECT_EQ(world.body(second).velocity.x(), -ToScalar(2));
+  EXPECT_TRUE(world.body(first).contact_started);
+  EXPECT_TRUE(world.body(second).contact_started);
+}
+
+TEST(PhysicsWorld, TriggerBodiesBounceAtWorldBoundsOnly) {
+  PhysicsWorld world;
+  world.SetBounds({{Scalar{}, Scalar{}},
+                   {ToScalar(10), ToScalar(10)}});
+  const std::size_t trigger =
+      world.AddStaticTrigger({ToScalar(9), ToScalar(5)}, ToScalar(1));
+  const std::size_t ball = world.AddTriggerBody(
+      {Ratio(17, 2), ToScalar(5)}, {ToScalar(2), Scalar{}}, Ratio(1, 2));
+
+  world.Step(Ratio(1, 2));
+  EXPECT_EQ(world.body(ball).position.x(), Ratio(19, 2));
+  EXPECT_EQ(world.body(ball).velocity.x(), ToScalar(2));
+  EXPECT_TRUE(world.body(trigger).contact_started);
+  EXPECT_TRUE(world.body(ball).contact_started);
+
+  world.Step(Ratio(1, 60));
+  EXPECT_EQ(world.body(ball).position.x(), Ratio(19, 2));
+  EXPECT_LT(world.body(ball).velocity.x(), Scalar{});
+}
+
+TEST(TriggerSample, BallsChangeColorWhenTheyTriggerEachOther) {
+  const SampleContext context{sample_config::kWorldBounds};
+  TriggerSample sample;
+  sample.Begin(context);
+  DrawList initial;
+  DrawList stepped;
+  DrawList moved;
+  sample.Draw(initial);
+  ASSERT_EQ(initial.circles.size(), sample_config::kTriggerBallCount);
+
+  for (int step = 0; step < 10; ++step) {
+    sample.FixedUpdate({});
+  }
+  sample.Draw(stepped);
+  for (int step = 10; step < kStepCount; ++step) {
+    sample.FixedUpdate({});
+  }
+  sample.Draw(moved);
+  ASSERT_EQ(moved.circles.size(), initial.circles.size());
+  bool color_changed = false;
+  for (std::size_t i = 0; i < initial.circles.size(); ++i) {
+    color_changed |= initial.circles[i].color != moved.circles[i].color;
+  }
+  EXPECT_TRUE(color_changed);
   sample.End();
 }
 
