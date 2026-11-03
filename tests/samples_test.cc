@@ -280,6 +280,22 @@ TEST(PhysicsWorld, GravityAndBoundsAffectBodyMotion) {
   EXPECT_LT(world.body(0).velocity.y(), Scalar{});
 }
 
+TEST(PhysicsWorld, GravityAndIntegrationCanBeAppliedSeparately) {
+  PhysicsWorld world;
+  world.SetGravity({Scalar{}, ToScalar(2)});
+  const std::size_t body =
+      world.AddBody({ToScalar(1), Scalar{}}, {ToScalar(1), Scalar{}},
+                    Ratio(1, 2), ToScalar(1));
+
+  world.ApplyGravity(Ratio(1, 2));
+  EXPECT_EQ(world.body(body).velocity.y(), ToScalar(1));
+  EXPECT_EQ(world.body(body).position.y(), Scalar{});
+
+  world.Integrate(Ratio(1, 2));
+  EXPECT_EQ(world.body(body).position.x(), Ratio(3, 2));
+  EXPECT_EQ(world.body(body).position.y(), Ratio(1, 2));
+}
+
 TEST(PhysicsWorld, ForcesAccumulateUntilTheNextStep) {
   PhysicsWorld world;
   const std::size_t body =

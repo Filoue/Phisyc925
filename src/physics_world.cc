@@ -76,25 +76,39 @@ Scalar PhysicsWorld::InverseMass(const PhysicsBody& body) const {
   return body.is_static ? Scalar{} : ToScalar(1) / body.mass;
 }
 
-void PhysicsWorld::Step(Scalar delta_time) {
+void PhysicsWorld::ApplyGravity(Scalar delta_time) {
   for (PhysicsBody& body : bodies_) {
-    body.contact_started = false;
-    body.touching_ = false;
+    if (!body.is_static) {
+      body.velocity += gravity_ * delta_time;
+    }
+  }
+}
+
+void PhysicsWorld::Integrate(Scalar delta_time) {
+  for (PhysicsBody& body : bodies_) {
     if (body.is_static) {
       body.velocity = {};
       body.force_ = {};
       continue;
     }
 
-    body.velocity +=
-        (gravity_ + body.force_ * InverseMass(body)) * delta_time;
+    body.velocity += body.force_ * (InverseMass(body) * delta_time);
     body.position += body.velocity * delta_time;
     body.force_ = {};
     if (has_bounds_) {
       KeepInsideBounds(body);
     }
   }
+}
 
+void PhysicsWorld::Step(Scalar delta_time) {
+  for (PhysicsBody& body : bodies_) {
+    body.contact_started = false;
+    body.touching_ = false;
+  }
+
+  ApplyGravity(delta_time);
+  Integrate(delta_time);
   ResolveBodyContacts();
 
   for (PhysicsBody& body : bodies_) {

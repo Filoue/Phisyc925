@@ -110,6 +110,17 @@ class PhysicsWorld {
   /// Impulses applied to static bodies are ignored.
   void ApplyImpulse(std::size_t body_index, PhysicsVector impulse);
 
+  /// Applies the world's gravity to movable body velocities.
+  ///
+  /// @param delta_time Time interval, in seconds.
+  void ApplyGravity(Scalar delta_time);
+
+  /// Integrates body forces and positions over a time interval.
+  ///
+  /// Accumulated forces are cleared after integration.
+  /// @param delta_time Time interval, in seconds.
+  void Integrate(Scalar delta_time);
+
   /// Advances gravity, positions and contacts by one fixed time step.
   ///
   /// @param delta_time Positive time step, in seconds.
