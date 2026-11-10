@@ -25,6 +25,8 @@ inline constexpr Rect kWorldBounds{{Scalar{}, Scalar{}},
 inline constexpr std::size_t kHelloBallCount = 24;
 /// Number of balls in @ref TriggerSample.
 inline constexpr std::size_t kTriggerBallCount = 24;
+/// Number of balls in @ref CollisionSample.
+inline constexpr std::size_t kCollisionBallCount = 128;
 /// @ref DrawList circle capacity reserved by the hosts.
 inline constexpr std::size_t kMaxDrawCircles = 128;
 /// @ref DrawList box capacity reserved by the hosts.
@@ -42,6 +44,8 @@ inline constexpr Rect kWorldBounds{{Scalar{}, Scalar{}},
 inline constexpr std::size_t kHelloBallCount = 200;
 /// Number of balls in @ref TriggerSample (24 on the DS).
 inline constexpr std::size_t kTriggerBallCount = 96;
+/// Number of balls in @ref CollisionSample.
+inline constexpr std::size_t kCollisionBallCount = 128;
 /// @ref DrawList circle capacity reserved by the hosts (128 on the DS).
 inline constexpr std::size_t kMaxDrawCircles = 1024;
 /// @ref DrawList box capacity reserved by the hosts (16 on the DS).

@@ -1,3 +1,6 @@
+#include <utility>
+#include <vector>
+
 #include <gtest/gtest.h>
 
 #include "gpr925/scalar.h"
@@ -6,6 +9,8 @@
 #include "main/samples/02_planet.h"
 #include "main/samples/03_planetFourVec2.h"
 #include "main/samples/04_trigger.h"
+#include "main/samples/05_Collision.h"
+#include "main/samples/05_physics_world.h"
 #include "main/samples/sample.h"
 #include "main/samples/sample_config.h"
 
@@ -256,14 +261,14 @@ TEST(PhysicsWorld, ResolvesBallCollisionsAndReportsNewContacts) {
   world.Step(Ratio(1, 2));
   world.Step(Ratio(1, 2));
   ASSERT_EQ(world.body_count(), 2u);
-  EXPECT_TRUE(world.body(0).contact_started);
-  EXPECT_TRUE(world.body(1).contact_started);
+  EXPECT_EQ(world.body(0).contact_started_count, 1u);
+  EXPECT_EQ(world.body(1).contact_started_count, 1u);
   EXPECT_LT(world.body(0).velocity.x(), Scalar{});
   EXPECT_GT(world.body(1).velocity.x(), Scalar{});
 
   world.Step(Ratio(1, 60));
-  EXPECT_FALSE(world.body(0).contact_started);
-  EXPECT_FALSE(world.body(1).contact_started);
+  EXPECT_EQ(world.body(0).contact_started_count, 0u);
+  EXPECT_EQ(world.body(1).contact_started_count, 0u);
 }
 
 TEST(PhysicsWorld, GravityAndBoundsAffectBodyMotion) {
@@ -324,8 +329,8 @@ TEST(PhysicsWorld, ImpulsesAndStaticBodiesWorkWithoutWorldBounds) {
   EXPECT_EQ(world.body(obstacle).position.x(), ToScalar(6));
   EXPECT_EQ(world.body(obstacle).velocity.x(), Scalar{});
   EXPECT_LT(world.body(ball).velocity.x(), Scalar{});
-  EXPECT_TRUE(world.body(obstacle).contact_started);
-  EXPECT_TRUE(world.body(ball).contact_started);
+  EXPECT_EQ(world.body(obstacle).contact_started_count, 1u);
+  EXPECT_EQ(world.body(ball).contact_started_count, 1u);
 }
 
 TEST(PhysicsWorld, BallTriggersDetectEachOtherWithoutChangingVelocity) {
@@ -343,8 +348,102 @@ TEST(PhysicsWorld, BallTriggersDetectEachOtherWithoutChangingVelocity) {
   EXPECT_EQ(world.body(second).position.x(), ToScalar(2));
   EXPECT_EQ(world.body(first).velocity.x(), ToScalar(2));
   EXPECT_EQ(world.body(second).velocity.x(), -ToScalar(2));
-  EXPECT_TRUE(world.body(first).contact_started);
-  EXPECT_TRUE(world.body(second).contact_started);
+  EXPECT_EQ(world.body(first).contact_started_count, 1u);
+  EXPECT_EQ(world.body(second).contact_started_count, 1u);
+}
+
+TEST(PhysicsWorld, NotifiesColliderAndTriggerEnterAndExit) {
+  class Listener : public PhysicsContactListener {
+   public:
+    PhysicsWorld* world = nullptr;
+    std::size_t trigger_body = 0;
+
+    void OnTriggerEnter(std::size_t body, std::size_t other) override {
+      trigger_enters.emplace_back(body, other);
+      if (body == trigger_body) {
+        world->ApplyImpulse(other, {Scalar{}, -ToScalar(2)});
+      }
+    }
+    void OnTriggerExit(std::size_t body, std::size_t other) override {
+      trigger_exits.emplace_back(body, other);
+    }
+    void OnColliderEnter(std::size_t body, std::size_t other) override {
+      collider_enters.emplace_back(body, other);
+    }
+    void OnColliderExit(std::size_t body, std::size_t other) override {
+      collider_exits.emplace_back(body, other);
+    }
+
+    std::vector<std::pair<std::size_t, std::size_t>> trigger_enters;
+    std::vector<std::pair<std::size_t, std::size_t>> trigger_exits;
+    std::vector<std::pair<std::size_t, std::size_t>> collider_enters;
+    std::vector<std::pair<std::size_t, std::size_t>> collider_exits;
+  };
+
+  Listener listener;
+  PhysicsWorld world;
+  world.SetContactListener(&listener);
+  const std::size_t solid =
+      world.AddBody({}, {}, ToScalar(1), ToScalar(1));
+  const std::size_t other_solid =
+      world.AddBody({Ratio(3, 2), Scalar{}}, {}, ToScalar(1), ToScalar(1));
+  EXPECT_EQ(world.body(solid).collider.is_trigger, 0);
+
+  world.Step(Ratio(1, 60));
+  ASSERT_EQ(listener.collider_enters.size(), 2u);
+  EXPECT_EQ(listener.collider_enters[0],
+            (std::pair<std::size_t, std::size_t>{solid, other_solid}));
+  EXPECT_EQ(listener.collider_enters[1],
+            (std::pair<std::size_t, std::size_t>{other_solid, solid}));
+
+  world.body(other_solid).position.x() = ToScalar(5);
+  world.Step(Ratio(1, 60));
+  ASSERT_EQ(listener.collider_exits.size(), 2u);
+
+  world.Clear();
+  listener.collider_enters.clear();
+  listener.collider_exits.clear();
+  const std::size_t trigger =
+      world.AddStaticTrigger({}, ToScalar(1));
+  const std::size_t entering_body =
+      world.AddBody({Ratio(3, 2), Scalar{}}, {}, ToScalar(1), ToScalar(1));
+  EXPECT_EQ(world.body(trigger).collider.is_trigger, 1);
+  listener.world = &world;
+  listener.trigger_body = trigger;
+
+  world.Step(Ratio(1, 60));
+  ASSERT_EQ(listener.trigger_enters.size(), 2u);
+  EXPECT_EQ(listener.trigger_enters[0],
+            (std::pair<std::size_t, std::size_t>{trigger, entering_body}));
+  EXPECT_EQ(world.body(entering_body).velocity.y(), -ToScalar(2));
+
+  world.body(entering_body).position.x() = ToScalar(5);
+  world.Step(Ratio(1, 60));
+  ASSERT_EQ(listener.trigger_exits.size(), 2u);
+  EXPECT_EQ(listener.trigger_exits[0],
+            (std::pair<std::size_t, std::size_t>{trigger, entering_body}));
+}
+
+TEST(PhysicsWorld, CountsSimultaneousAndNewContactsIndividually) {
+  PhysicsWorld world;
+  const std::size_t center =
+      world.AddTriggerBody({ToScalar(5), ToScalar(5)}, {}, ToScalar(1));
+  const std::size_t left =
+      world.AddStaticTrigger({Ratio(7, 2), ToScalar(5)}, ToScalar(1));
+  world.AddStaticTrigger({Ratio(13, 2), ToScalar(5)}, ToScalar(1));
+  const std::size_t arriving =
+      world.AddStaticTrigger({ToScalar(9), ToScalar(5)}, ToScalar(1));
+
+  world.Step(Ratio(1, 60));
+  EXPECT_EQ(world.body(center).touching_count, 2u);
+  EXPECT_EQ(world.body(center).contact_started_count, 2u);
+
+  world.body(left).position.x() = ToScalar(1);
+  world.body(arriving).position.x() = Ratio(9, 2);
+  world.Step(Ratio(1, 60));
+  EXPECT_EQ(world.body(center).was_touching_count, 2u);
+  EXPECT_EQ(world.body(center).touching_count, 2u);
+  EXPECT_EQ(world.body(center).contact_started_count, 1u);
 }
 
 TEST(PhysicsWorld, TriggerBodiesBounceAtWorldBoundsOnly) {
@@ -359,12 +458,29 @@ TEST(PhysicsWorld, TriggerBodiesBounceAtWorldBoundsOnly) {
   world.Step(Ratio(1, 2));
   EXPECT_EQ(world.body(ball).position.x(), Ratio(19, 2));
   EXPECT_EQ(world.body(ball).velocity.x(), ToScalar(2));
-  EXPECT_TRUE(world.body(trigger).contact_started);
-  EXPECT_TRUE(world.body(ball).contact_started);
+  EXPECT_EQ(world.body(trigger).contact_started_count, 1u);
+  EXPECT_EQ(world.body(ball).contact_started_count, 1u);
 
   world.Step(Ratio(1, 60));
   EXPECT_EQ(world.body(ball).position.x(), Ratio(19, 2));
   EXPECT_LT(world.body(ball).velocity.x(), Scalar{});
+}
+
+TEST(PhysicsWorldSample, DemonstratesGravityAndImpulseInFixedUpdates) {
+  const SampleContext context{sample_config::kWorldBounds};
+  PhysicsWorldSample sample;
+  sample.Begin(context);
+  DrawList initial;
+  DrawList stepped;
+  sample.Draw(initial);
+  ASSERT_EQ(initial.circles.size(), 3u);
+
+  sample.FixedUpdate(Input::FromHeld(ButtonMask(Button::kA), 0));
+  sample.Draw(stepped);
+  ASSERT_EQ(stepped.circles.size(), 3u);
+  EXPECT_LT(stepped.circles[0].center.y, initial.circles[0].center.y);
+  EXPECT_GT(stepped.circles[1].center.y, initial.circles[1].center.y);
+  sample.End();
 }
 
 TEST(TriggerSample, BallsChangeColorWhenTheyTriggerEachOther) {
@@ -391,6 +507,45 @@ TEST(TriggerSample, BallsChangeColorWhenTheyTriggerEachOther) {
     color_changed |= initial.circles[i].color != moved.circles[i].color;
   }
   EXPECT_TRUE(color_changed);
+  sample.End();
+}
+
+TEST(CollisionSample, BallsFallAndAreGreenOnlyWhileTouching) {
+  const SampleContext context{sample_config::kWorldBounds};
+  CollisionSample sample;
+  sample.Begin(context);
+  DrawList initial;
+  DrawList current;
+  sample.Draw(initial);
+
+  ASSERT_EQ(initial.circles.size(), sample_config::kCollisionBallCount);
+  for (const DrawCircle& ball : initial.circles) {
+    EXPECT_EQ(ball.color, sample_color::kRed);
+  }
+  EXPECT_NE(initial.circles[0].radius, initial.circles[1].radius);
+
+  std::vector<bool> seen_green(initial.circles.size(), false);
+  bool saw_green = false;
+  bool saw_red_after_green = false;
+  for (int step = 0; step < 600; ++step) {
+    sample.FixedUpdate({});
+    current.Clear();
+    sample.Draw(current);
+    ASSERT_EQ(current.circles.size(), initial.circles.size());
+    for (std::size_t i = 0; i < current.circles.size(); ++i) {
+      if (current.circles[i].color == sample_color::kGreen) {
+        seen_green[i] = true;
+        saw_green = true;
+      } else if (seen_green[i]) {
+        saw_red_after_green = true;
+      }
+    }
+  }
+  const bool fell =
+      current.circles[0].center.y > initial.circles[0].center.y;
+  EXPECT_TRUE(fell);
+  EXPECT_TRUE(saw_green);
+  EXPECT_TRUE(saw_red_after_green);
   sample.End();
 }
 

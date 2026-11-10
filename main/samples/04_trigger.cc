@@ -61,7 +61,7 @@ void TriggerSample::FixedUpdate(const Input& input) {
   // ball-to-ball overlap begins; the world never resolves these overlaps.
   for (std::size_t i = 0; i < ball_bodies_.size(); ++i) {
     PhysicsBody& ball = world_.body(ball_bodies_[i]);
-    if (ball.contact_started) {
+    if (ball.contact_started_count > 0) {
       colors_[i] = NextColor(colors_[i]);
     }
   }
@@ -71,7 +71,8 @@ void TriggerSample::Draw(DrawList& draw_list) const {
   for (std::size_t i = 0; i < ball_bodies_.size(); ++i) {
     const PhysicsBody& ball = world_.body(ball_bodies_[i]);
     draw_list.circles.push_back(
-        {{ball.position.x(), ball.position.y()}, ball.radius, colors_[i]});
+        {{ball.position.x(), ball.position.y()}, ball.collider.radius,
+         colors_[i]});
   }
 }
 

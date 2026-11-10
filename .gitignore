@@ -19,5 +19,9 @@ compile_commands.json
 main/samples/sample_template.cc
 main/samples/sample_template.h
 
+# md files
+
+HowToUseMyPhisics.md
+
 # Written by the PC sample host next to where it is run
 imgui.ini

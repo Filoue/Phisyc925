@@ -14,21 +14,42 @@ namespace gpr925 {
 /// Vector type used by EngineLib's math and physics algorithms.
 using PhysicsVector = maths::Vector2<Scalar>;
 
+/// Circular shape and contact behavior attached to a physics body.
+struct Collider {
+  Scalar radius{};                    ///< Collision radius, in meters.
+  Scalar restitution = ToScalar(1);   ///< Bounciness from zero to one.
+  int is_trigger = 0;                 ///< Nonzero for overlap-only contacts.
+};
+
+/// Receives pairwise contact callbacks from a @ref PhysicsWorld.
+///
+/// Each callback is called once for each participant, with that body's index
+/// first and the other body's index second. Callbacks run during @ref Step;
+/// they can apply forces or impulses, but must defer adding or removing bodies
+/// until the step has finished.
+class PhysicsContactListener {
+ public:
+  virtual ~PhysicsContactListener() = default;
+  virtual void OnTriggerEnter(std::size_t, std::size_t) {}
+  virtual void OnTriggerExit(std::size_t, std::size_t) {}
+  virtual void OnColliderEnter(std::size_t, std::size_t) {}
+  virtual void OnColliderExit(std::size_t, std::size_t) {}
+};
+
 /// A circular rigid body simulated by @ref PhysicsWorld.
-struct PhysicsBody {
+class PhysicsBody {
+ public:
   PhysicsVector position{};       ///< Center of the body, in meters.
   PhysicsVector velocity{};       ///< Velocity, in meters per second.
-  Scalar radius{};                 ///< Collision radius, in meters.
+  Collider collider{};             ///< Shape and trigger/collider settings.
   Scalar mass = ToScalar(1);      ///< Mass; ignored for static bodies.
-  Scalar restitution = ToScalar(1);  ///< Bounciness from zero to one.
-  bool is_static = false;         ///< Static bodies do not move.
-  bool is_trigger = false;        ///< Overlaps without collision response.
-  bool contact_started = false;   ///< True on the first step of a new contact.
+  bool is_static = false;          ///< Static bodies do not move.
+  std::size_t contact_started_count = 0;  ///< New contacts during latest step.
+  std::size_t touching_count = 0;        ///< Current overlapping bodies.
+  std::size_t was_touching_count = 0;     ///< Overlapping bodies last step.
 
  private:
   PhysicsVector force_{};
-  bool touching_ = false;
-  bool was_touching_ = false;
 
   friend class PhysicsWorld;
 };
@@ -55,12 +76,23 @@ class PhysicsWorld {
   void ClearBounds() { has_bounds_ = false; }
   /// Sets constant acceleration, in meters per second squared.
   void SetGravity(PhysicsVector gravity) { gravity_ = gravity; }
+  /// Sets the non-owning recipient of trigger and collider enter/exit events.
+  ///
+  /// The listener must remain alive until it is unregistered or the world is
+  /// destroyed.
+  void SetContactListener(PhysicsContactListener* listener) {
+    contact_listener_ = listener;
+  }
   /// Reserves body storage; call during setup to avoid simulation-time growth.
   void Reserve(std::size_t body_count) { bodies_.reserve(body_count); }
-  /// Removes all bodies while retaining their allocated storage.
-  void Clear() { bodies_.clear(); }
+  /// Removes all bodies and contact history while retaining allocated storage.
+  void Clear() {
+    bodies_.clear();
+    previous_contacts_.clear();
+    current_contacts_.clear();
+  }
 
-  /// Adds a movable circular body.
+  /// Adds a movable circular body with a solid collider.
   ///
   /// @param position Center in meters.
   /// @param velocity In meters per second.
@@ -74,7 +106,7 @@ class PhysicsWorld {
                       Scalar radius, Scalar mass,
                       Scalar restitution = ToScalar(1));
 
-  /// Adds an immovable circular body, such as a wall or obstacle.
+  /// Adds an immovable circular body with a solid collider, such as a wall.
   ///
   /// @param position Center in meters.
   /// @param radius Positive collision radius in meters.
@@ -83,17 +115,18 @@ class PhysicsWorld {
   std::size_t AddStaticBody(PhysicsVector position, Scalar radius,
                             Scalar restitution = ToScalar(1));
 
-  /// Adds a movable circular trigger that reports overlaps without resolving
-  /// them or changing either body's velocity.
+  /// Adds a movable circular trigger that reports enter and exit events
+  /// without resolving overlaps or changing either body's velocity.
   ///
   /// @param position Center in meters.
   /// @param velocity In meters per second.
   /// @param radius Positive trigger radius in meters.
   /// @return Index used to retrieve the body from @ref body.
+
   std::size_t AddTriggerBody(PhysicsVector position, PhysicsVector velocity,
                              Scalar radius);
 
-  /// Adds an immovable circular trigger volume.
+  /// Adds an immovable circular trigger volume that reports enter and exit.
   ///
   /// @param position Center in meters.
   /// @param radius Positive trigger radius in meters.
@@ -138,14 +171,36 @@ class PhysicsWorld {
   }
 
  private:
+  struct ContactPair {
+    std::size_t first;
+    std::size_t second;
+    bool is_trigger;
+
+    bool operator<(const ContactPair& other) const {
+      if (first != other.first) {
+        return first < other.first;
+      }
+      if (second != other.second) {
+        return second < other.second;
+      }
+      return is_trigger < other.is_trigger;
+    }
+
+    bool operator==(const ContactPair& other) const = default;
+  };
+
   [[nodiscard]] Scalar InverseMass(const PhysicsBody& body) const;
   void KeepInsideBounds(PhysicsBody& body);
   void ResolveBodyContacts();
+  void NotifyContactEvents();
 
   Rect bounds_{};
   bool has_bounds_ = false;
   PhysicsVector gravity_{};
+  PhysicsContactListener* contact_listener_ = nullptr;
   std::vector<PhysicsBody> bodies_;
+  std::vector<ContactPair> previous_contacts_;
+  std::vector<ContactPair> current_contacts_;
 };
 
 }  // namespace gpr925
