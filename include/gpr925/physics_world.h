@@ -12,7 +12,7 @@
 namespace gpr925 {
 
 /// Vector type used by EngineLib's math and physics algorithms.
-using PhysicsVector = maths::Vector2<Scalar>;
+using Vec2 = maths::Vector2<Scalar>;
 
 /// Circular shape and contact behavior attached to a physics body.
 struct Collider {
@@ -39,8 +39,8 @@ class PhysicsContactListener {
 /// A circular rigid body simulated by @ref PhysicsWorld.
 class PhysicsBody {
  public:
-  PhysicsVector position{};       ///< Center of the body, in meters.
-  PhysicsVector velocity{};       ///< Velocity, in meters per second.
+  Vec2 position{};       ///< Center of the body, in meters.
+  Vec2 velocity{};       ///< Velocity, in meters per second.
   Collider collider{};             ///< Shape and trigger/collider settings.
   Scalar mass = ToScalar(1);      ///< Mass; ignored for static bodies.
   bool is_static = false;          ///< Static bodies do not move.
@@ -49,7 +49,7 @@ class PhysicsBody {
   std::size_t was_touching_count = 0;     ///< Overlapping bodies last step.
 
  private:
-  PhysicsVector force_{};
+  Vec2 force_{};
 
   friend class PhysicsWorld;
 };
@@ -75,7 +75,7 @@ class PhysicsWorld {
   /// Disables rectangular world boundaries.
   void ClearBounds() { has_bounds_ = false; }
   /// Sets constant acceleration, in meters per second squared.
-  void SetGravity(PhysicsVector gravity) { gravity_ = gravity; }
+  void SetGravity(Vec2 gravity) { gravity_ = gravity; }
   /// Sets the non-owning recipient of trigger and collider enter/exit events.
   ///
   /// The listener must remain alive until it is unregistered or the world is
@@ -102,7 +102,7 @@ class PhysicsWorld {
   /// @return Index used to retrieve the body from @ref body.
   ///
   /// Radius and mass must be positive. Restitution must be in [0, 1].
-  std::size_t AddBody(PhysicsVector position, PhysicsVector velocity,
+  std::size_t AddBody(Vec2 position, Vec2 velocity,
                       Scalar radius, Scalar mass,
                       Scalar restitution = ToScalar(1));
 
@@ -112,7 +112,7 @@ class PhysicsWorld {
   /// @param radius Positive collision radius in meters.
   /// @param restitution Bounciness from zero (no bounce) to one (elastic).
   /// @return Index used to retrieve the body from @ref body.
-  std::size_t AddStaticBody(PhysicsVector position, Scalar radius,
+  std::size_t AddStaticBody(Vec2 position, Scalar radius,
                             Scalar restitution = ToScalar(1));
 
   /// Adds a movable circular trigger that reports enter and exit events
@@ -123,7 +123,7 @@ class PhysicsWorld {
   /// @param radius Positive trigger radius in meters.
   /// @return Index used to retrieve the body from @ref body.
 
-  std::size_t AddTriggerBody(PhysicsVector position, PhysicsVector velocity,
+  std::size_t AddTriggerBody(Vec2 position, Vec2 velocity,
                              Scalar radius);
 
   /// Adds an immovable circular trigger volume that reports enter and exit.
@@ -131,17 +131,17 @@ class PhysicsWorld {
   /// @param position Center in meters.
   /// @param radius Positive trigger radius in meters.
   /// @return Index used to retrieve the body from @ref body.
-  std::size_t AddStaticTrigger(PhysicsVector position, Scalar radius);
+  std::size_t AddStaticTrigger(Vec2 position, Scalar radius);
 
   /// Adds a force to a movable body, in newtons.
   ///
   /// Forces accumulate until the next @ref Step. Forces applied to static
   /// bodies are ignored.
-  void ApplyForce(std::size_t body_index, PhysicsVector force);
+  void ApplyForce(std::size_t body_index, Vec2 force);
   /// Immediately changes a movable body's momentum, in newton-seconds.
   ///
   /// Impulses applied to static bodies are ignored.
-  void ApplyImpulse(std::size_t body_index, PhysicsVector impulse);
+  void ApplyImpulse(std::size_t body_index, Vec2 impulse);
 
   /// Applies the world's gravity to movable body velocities.
   ///
@@ -196,7 +196,7 @@ class PhysicsWorld {
 
   Rect bounds_{};
   bool has_bounds_ = false;
-  PhysicsVector gravity_{};
+  Vec2 gravity_{};
   PhysicsContactListener* contact_listener_ = nullptr;
   std::vector<PhysicsBody> bodies_;
   std::vector<ContactPair> previous_contacts_;

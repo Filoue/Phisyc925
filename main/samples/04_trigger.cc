@@ -13,7 +13,7 @@ namespace {
 constexpr std::uint32_t kSeed = 0x04B0115u;
 constexpr Scalar kBallRadius = Ratio(3, 10);
 constexpr Scalar kBallSpeed = Ratio(5, 2);
-constexpr std::array<PhysicsVector, 8> kDirections = {{
+constexpr std::array<Vec2, 8> kDirections = {{
     {ToScalar(1), Scalar{}},
     {ToScalar(-1), Scalar{}},
     {Scalar{}, ToScalar(1)},
@@ -91,14 +91,14 @@ void TriggerSample::ResetScene() {
   SampleRng rng{kSeed};
 
   for (std::size_t i = 0; i < sample_config::kTriggerBallCount; ++i) {
-    const PhysicsVector position{
-        rng.Range(bounds_.min_bound.x + ToScalar(1),
-                  bounds_.max_bound.x - ToScalar(1)),
-        rng.Range(bounds_.min_bound.y + ToScalar(1),
-                  bounds_.max_bound.y - ToScalar(1))};
-    const PhysicsVector direction = kDirections[i % kDirections.size()];
-    const PhysicsVector velocity =
-        direction * PhysicsVector{kBallSpeed, kBallSpeed};
+    const Vec2 position{
+        rng.Range(bounds_.min_bound.x() + ToScalar(1),
+                  bounds_.max_bound.x() - ToScalar(1)),
+        rng.Range(bounds_.min_bound.y() + ToScalar(1),
+                  bounds_.max_bound.y() - ToScalar(1))};
+    const Vec2 direction = kDirections[i % kDirections.size()];
+    const Vec2 velocity =
+        direction * Vec2{kBallSpeed, kBallSpeed};
     ball_bodies_.push_back(
         world_.AddTriggerBody(position, velocity, kBallRadius));
     colors_.push_back(rng.RandomColor());

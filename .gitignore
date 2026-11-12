@@ -22,6 +22,11 @@ main/samples/sample_template.h
 # md files
 
 HowToUseMyPhisics.md
+Explication_PhysicsWorld.md
+PromptARetenir.md
+
+# uml Files
+quadtree.uml
 
 # Written by the PC sample host next to where it is run
 imgui.ini

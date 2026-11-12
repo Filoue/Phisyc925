@@ -12,8 +12,8 @@ constexpr Scalar kPenetrationSlop = Ratio(1, 1000);
 
 }  // namespace
 
-std::size_t PhysicsWorld::AddBody(PhysicsVector position,
-                                  PhysicsVector velocity, Scalar radius,
+std::size_t PhysicsWorld::AddBody(Vec2 position,
+                                  Vec2 velocity, Scalar radius,
                                   Scalar mass, Scalar restitution) {
   PhysicsBody body;
   body.position = position;
@@ -25,7 +25,7 @@ std::size_t PhysicsWorld::AddBody(PhysicsVector position,
   return bodies_.size() - 1;
 }
 
-std::size_t PhysicsWorld::AddStaticBody(PhysicsVector position, Scalar radius,
+std::size_t PhysicsWorld::AddStaticBody(Vec2 position, Scalar radius,
                                         Scalar restitution) {
   PhysicsBody body;
   body.position = position;
@@ -36,8 +36,8 @@ std::size_t PhysicsWorld::AddStaticBody(PhysicsVector position, Scalar radius,
   return bodies_.size() - 1;
 }
 
-std::size_t PhysicsWorld::AddTriggerBody(PhysicsVector position,
-                                         PhysicsVector velocity,
+std::size_t PhysicsWorld::AddTriggerBody(Vec2 position,
+                                         Vec2 velocity,
                                          Scalar radius) {
   PhysicsBody body;
   body.position = position;
@@ -48,7 +48,7 @@ std::size_t PhysicsWorld::AddTriggerBody(PhysicsVector position,
   return bodies_.size() - 1;
 }
 
-std::size_t PhysicsWorld::AddStaticTrigger(PhysicsVector position,
+std::size_t PhysicsWorld::AddStaticTrigger(Vec2 position,
                                            Scalar radius) {
   PhysicsBody body;
   body.position = position;
@@ -59,7 +59,7 @@ std::size_t PhysicsWorld::AddStaticTrigger(PhysicsVector position,
   return bodies_.size() - 1;
 }
 
-void PhysicsWorld::ApplyForce(std::size_t body_index, PhysicsVector force) {
+void PhysicsWorld::ApplyForce(std::size_t body_index, Vec2 force) {
   PhysicsBody& target = bodies_[body_index];
   if (!target.is_static) {
     target.force_ += force;
@@ -67,7 +67,7 @@ void PhysicsWorld::ApplyForce(std::size_t body_index, PhysicsVector force) {
 }
 
 void PhysicsWorld::ApplyImpulse(std::size_t body_index,
-                                PhysicsVector impulse) {
+                                Vec2 impulse) {
   PhysicsBody& target = bodies_[body_index];
   if (!target.is_static) {
     target.velocity += impulse * InverseMass(target);
@@ -123,13 +123,13 @@ void PhysicsWorld::KeepInsideBounds(PhysicsBody& body) {
     return;
   }
 
-  const Scalar min_x = bounds_.min_bound.x + body.collider.radius;
-  const Scalar max_x = bounds_.max_bound.x - body.collider.radius;
-  const Scalar min_y = bounds_.min_bound.y + body.collider.radius;
-  const Scalar max_y = bounds_.max_bound.y - body.collider.radius;
+  const Scalar min_x = bounds_.min_bound.x() + body.collider.radius;
+  const Scalar max_x = bounds_.max_bound.x() - body.collider.radius;
+  const Scalar min_y = bounds_.min_bound.y() + body.collider.radius;
+  const Scalar max_y = bounds_.max_bound.y() - body.collider.radius;
 
   if (min_x > max_x) {
-    body.position.x() = bounds_.Center().x;
+    body.position.x() = bounds_.Center().x();
     body.velocity.x() = Scalar{};
   } else if (body.position.x() < min_x) {
     body.position.x() = min_x;
@@ -144,7 +144,7 @@ void PhysicsWorld::KeepInsideBounds(PhysicsBody& body) {
   }
 
   if (min_y > max_y) {
-    body.position.y() = bounds_.Center().y;
+    body.position.y() = bounds_.Center().y();
     body.velocity.y() = Scalar{};
   } else if (body.position.y() < min_y) {
     body.position.y() = min_y;
@@ -166,7 +166,7 @@ void PhysicsWorld::ResolveBodyContacts() {
     for (std::size_t second_index = first_index + 1;
          second_index < bodies_.size(); ++second_index) {
       PhysicsBody& second = bodies_[second_index];
-      PhysicsVector displacement = second.position - first.position;
+      Vec2 displacement = second.position - first.position;
       const Scalar distance_squared =
           maths::Vector2<Scalar>::Dot(displacement, displacement);
       const Scalar combined_radius =
@@ -176,15 +176,15 @@ void PhysicsWorld::ResolveBodyContacts() {
       }
 
       const Scalar distance = Sqrt(distance_squared);
-      const PhysicsVector relative_velocity =
+      const Vec2 relative_velocity =
           second.velocity - first.velocity;
-      const PhysicsVector normal =
+      const Vec2 normal =
           distance > Scalar{}
               ? displacement * (ToScalar(1) / distance)
               : (relative_velocity.SqrMagnitude() > Scalar{}
                      ? -relative_velocity *
                            (ToScalar(1) / Sqrt(relative_velocity.SqrMagnitude()))
-                     : PhysicsVector{ToScalar(1), Scalar{}});
+                     : Vec2{ToScalar(1), Scalar{}});
       const Scalar first_inverse_mass = InverseMass(first);
       const Scalar second_inverse_mass = InverseMass(second);
       const Scalar inverse_mass_sum =
@@ -224,7 +224,7 @@ void PhysicsWorld::ResolveBodyContacts() {
         const Scalar impulse =
             -(ToScalar(1) + restitution) * velocity_along_normal /
             inverse_mass_sum;
-        const PhysicsVector impulse_vector = normal * impulse;
+        const Vec2 impulse_vector = normal * impulse;
         first.velocity -= impulse_vector * first_inverse_mass;
         second.velocity += impulse_vector * second_inverse_mass;
       }

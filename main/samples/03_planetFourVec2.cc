@@ -105,7 +105,7 @@ void PlanetFourVec2::End() {
 void PlanetFourVec2::ResetPlanets() {
   SampleRng rng{kSeed};
   const Scalar max_radius =
-      Min(bounds_.Size().x, bounds_.Size().y) * kMaxOrbitFraction;
+      Min(bounds_.Size().x(), bounds_.Size().y()) * kMaxOrbitFraction;
   const Scalar min_radius =
       max_radius * (kMinOrbitFraction / kMaxOrbitFraction);
   const Scalar max_radius_squared = max_radius * max_radius;

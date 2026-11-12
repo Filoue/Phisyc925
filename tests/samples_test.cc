@@ -10,7 +10,6 @@
 #include "main/samples/03_planetFourVec2.h"
 #include "main/samples/04_trigger.h"
 #include "main/samples/05_Collision.h"
-#include "main/samples/05_physics_world.h"
 #include "main/samples/sample.h"
 #include "main/samples/sample_config.h"
 
@@ -20,10 +19,10 @@ namespace {
 constexpr int kStepCount = 600;
 
 bool IsInside(Vec2 point, const Rect& bounds, Scalar margin) {
-  return point.x >= bounds.min_bound.x - margin &&
-         point.x <= bounds.max_bound.x + margin &&
-         point.y >= bounds.min_bound.y - margin &&
-         point.y <= bounds.max_bound.y + margin;
+  return point.x() >= bounds.min_bound.x() - margin &&
+         point.x() <= bounds.max_bound.x() + margin &&
+         point.y() >= bounds.min_bound.y() - margin &&
+         point.y() <= bounds.max_bound.y() + margin;
 }
 
 TEST(SampleRegistry, StartsWithNoSampleSelected) {
@@ -106,14 +105,14 @@ TEST(HelloSample, DpadMovesThePlayer) {
   for (int step = 0; step < 30; ++step) {
     sample.FixedUpdate(right);
   }
-  EXPECT_GT(sample.player_position().x, start.x);
-  EXPECT_EQ(sample.player_position().y, start.y);
+  EXPECT_GT(sample.player_position().x(), start.x());
+  EXPECT_EQ(sample.player_position().y(), start.y());
 
   const Input up = Input::FromHeld(ButtonMask(Button::kUp), 0);
   for (int step = 0; step < 30; ++step) {
     sample.FixedUpdate(up);
   }
-  EXPECT_LT(sample.player_position().y, start.y);
+  EXPECT_LT(sample.player_position().y(), start.y());
   sample.End();
 }
 
@@ -243,8 +242,8 @@ TEST(PlanetFourVec2, PlanetsStayWithinTheWorldDuringGravitySimulation) {
   for (std::size_t i = 0; i < draw_list.circles.size(); ++i) {
     const Vec2 position = draw_list.circles[i].center;
     EXPECT_TRUE(IsInside(position, context.world_bounds, Ratio(1, 10)))
-        << "planet " << i << " at " << ToFloat(position.x) << ", "
-        << ToFloat(position.y);
+        << "planet " << i << " at " << ToFloat(position.x()) << ", "
+        << ToFloat(position.y());
   }
   sample.End();
 }
@@ -466,23 +465,6 @@ TEST(PhysicsWorld, TriggerBodiesBounceAtWorldBoundsOnly) {
   EXPECT_LT(world.body(ball).velocity.x(), Scalar{});
 }
 
-TEST(PhysicsWorldSample, DemonstratesGravityAndImpulseInFixedUpdates) {
-  const SampleContext context{sample_config::kWorldBounds};
-  PhysicsWorldSample sample;
-  sample.Begin(context);
-  DrawList initial;
-  DrawList stepped;
-  sample.Draw(initial);
-  ASSERT_EQ(initial.circles.size(), 3u);
-
-  sample.FixedUpdate(Input::FromHeld(ButtonMask(Button::kA), 0));
-  sample.Draw(stepped);
-  ASSERT_EQ(stepped.circles.size(), 3u);
-  EXPECT_LT(stepped.circles[0].center.y, initial.circles[0].center.y);
-  EXPECT_GT(stepped.circles[1].center.y, initial.circles[1].center.y);
-  sample.End();
-}
-
 TEST(TriggerSample, BallsChangeColorWhenTheyTriggerEachOther) {
   const SampleContext context{sample_config::kWorldBounds};
   TriggerSample sample;
@@ -542,7 +524,7 @@ TEST(CollisionSample, BallsFallAndAreGreenOnlyWhileTouching) {
     }
   }
   const bool fell =
-      current.circles[0].center.y > initial.circles[0].center.y;
+      current.circles[0].center.y() > initial.circles[0].center.y();
   EXPECT_TRUE(fell);
   EXPECT_TRUE(saw_green);
   EXPECT_TRUE(saw_red_after_green);

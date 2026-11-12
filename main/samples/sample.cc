@@ -5,7 +5,6 @@
 #include "main/samples/03_planetFourVec2.h"
 #include "main/samples/04_trigger.h"
 #include "main/samples/05_Collision.h"
-#include "main/samples/05_physics_world.h"
 
 namespace gpr925 {
 
@@ -14,11 +13,8 @@ SampleRegistry::SampleRegistry() {
   samples_.reserve(6);
   samples_.push_back({"01 Hello", std::make_unique<HelloSample>()});
   samples_.push_back({"02 Planet", std::make_unique<PlanetSample>()});
-  samples_.push_back(
-      {"03 Planet FourVec2", std::make_unique<PlanetFourVec2>()});
+  samples_.push_back({"03 Planet FourVec2", std::make_unique<PlanetFourVec2>()});
   samples_.push_back({"04 Trigger", std::make_unique<TriggerSample>()});
-  samples_.push_back(
-      {"05 Physics World", std::make_unique<PhysicsWorldSample>()});
   samples_.push_back({"06 Collision", std::make_unique<CollisionSample>()});
 }
 

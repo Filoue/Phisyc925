@@ -1,6 +1,7 @@
 #ifndef GPR925_VEC2_H_
 #define GPR925_VEC2_H_
 
+#include "vector2.h"
 #include "gpr925/scalar.h"
 
 namespace gpr925 {
@@ -17,51 +18,53 @@ namespace gpr925 {
 /// @endcode
 /// The members below mirror `maths::Vector2` so that the swap is that one
 /// line.
-struct Vec2 {
-  Scalar x{};  ///< Horizontal component, to the right.
-  Scalar y{};  ///< Vertical component, pointing down on screen.
+// struct Vec2 {
+//   Scalar x{};  ///< Horizontal component, to the right.
+//   Scalar y{};  ///< Vertical component, pointing down on screen.
 
-  /// Returns the squared length: no square root, use it to compare distances.
-  [[nodiscard]] constexpr Scalar SqrMagnitude() const noexcept {
-    return x * x + y * y;
-  }
-  /// Returns the length.
-  [[nodiscard]] Scalar Magnitude() const noexcept {
-    return Sqrt(SqrMagnitude());
-  }
+//   /// Returns the squared length: no square root, use it to compare distances.
+//   [[nodiscard]] constexpr Scalar SqrMagnitude() const noexcept {
+//     return x * x + y * y;
+//   }
+//   /// Returns the length.
+//   [[nodiscard]] Scalar Magnitude() const noexcept {
+//     return Sqrt(SqrMagnitude());
+//   }
 
-  /// Compares two vectors component by component.
-  constexpr bool operator==(const Vec2& v) const noexcept = default;
+//   /// Compares two vectors component by component.
+//   constexpr bool operator==(const Vec2& v) const noexcept = default;
 
-  /// Adds two vectors.
-  constexpr Vec2 operator+(const Vec2& v) const noexcept {
-    return {x + v.x, y + v.y};
-  }
-  /// Subtracts two vectors.
-  constexpr Vec2 operator-(const Vec2& v) const noexcept {
-    return {x - v.x, y - v.y};
-  }
-  /// Multiplies two vectors component by component.
-  constexpr Vec2 operator*(const Vec2& v) const noexcept {
-    return {x * v.x, y * v.y};
-  }
+//   /// Adds two vectors.
+//   constexpr Vec2 operator+(const Vec2& v) const noexcept {
+//     return {x + v.x, y + v.y};
+//   }
+//   /// Subtracts two vectors.
+//   constexpr Vec2 operator-(const Vec2& v) const noexcept {
+//     return {x - v.x, y - v.y};
+//   }
+//   /// Multiplies two vectors component by component.
+//   constexpr Vec2 operator*(const Vec2& v) const noexcept {
+//     return {x * v.x, y * v.y};
+//   }
 
-  /// Adds a vector in place.
-  constexpr void operator+=(const Vec2& v) noexcept {
-    x += v.x;
-    y += v.y;
-  }
-  /// Subtracts a vector in place.
-  constexpr void operator-=(const Vec2& v) noexcept {
-    x -= v.x;
-    y -= v.y;
-  }
-  /// Multiplies component by component in place.
-  constexpr void operator*=(const Vec2& v) noexcept {
-    x *= v.x;
-    y *= v.y;
-  }
-};
+//   /// Adds a vector in place.
+//   constexpr void operator+=(const Vec2& v) noexcept {
+//     x += v.x;
+//     y += v.y;
+//   }
+//   /// Subtracts a vector in place.
+//   constexpr void operator-=(const Vec2& v) noexcept {
+//     x -= v.x;
+//     y -= v.y;
+//   }
+//   /// Multiplies component by component in place.
+//   constexpr void operator*=(const Vec2& v) noexcept {
+//     x *= v.x;
+//     y *= v.y;
+//   }
+// };
+
+using Vec2 = maths::Vector2<Scalar>;
 
 /// Axis-aligned rectangle, from its top-left to its bottom-right corner.
 struct Rect {
@@ -74,7 +77,7 @@ struct Rect {
   }
   /// Returns the middle point.
   [[nodiscard]] constexpr Vec2 Center() const noexcept {
-    return {(min_bound.x + max_bound.x) / 2, (min_bound.y + max_bound.y) / 2};
+    return {(min_bound.x() + max_bound.x()) / 2, (min_bound.y() + max_bound.y()) / 2};
   }
 };
 
