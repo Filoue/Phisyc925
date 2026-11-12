@@ -48,7 +48,7 @@ FourVec2 GravityAcceleration(const FourVec2& positions) {
 void PlanetFourVec2::Begin(const SampleContext& context) {
   bounds_ = context.world_bounds;
   const Vec2 world_center = bounds_.Center();
-  center_ = EngineVec2{world_center.x, world_center.y};
+  center_ = EngineVec2{world_center.x(), world_center.y()};
   paused_ = false;
   ResetPlanets();
 }

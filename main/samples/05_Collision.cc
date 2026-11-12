@@ -28,15 +28,15 @@ void CollisionSample::Begin(const SampleContext& context) {
   colors_.reserve(sample_config::kCollisionBallCount);
 
   const Rect& bounds = context.world_bounds;
-  const Scalar width = bounds.max_bound.x - bounds.min_bound.x;
-  const Scalar height = bounds.max_bound.y - bounds.min_bound.y;
+  const Scalar width = bounds.max_bound.x() - bounds.min_bound.x();
+  const Scalar height = bounds.max_bound.y() - bounds.min_bound.y();
   const Scalar spacing_height = height - Ratio(7, 10);
   for (std::size_t row = 0; row < kBallRows; ++row) {
     for (std::size_t column = 0; column < kBallColumns; ++column) {
-      const Scalar x = bounds.min_bound.x +
+      const Scalar x = bounds.min_bound.x() +
                        width * Ratio(static_cast<int>(column + 1), 17);
       const Scalar y =
-          bounds.min_bound.y + Ratio(7, 20) +
+          bounds.min_bound.y() + Ratio(7, 20) +
           spacing_height * Ratio(static_cast<int>(row), 7);
       const Scalar radius = kBallRadii[(row + column) % kBallRadii.size()];
       world_.AddBody({x, y}, {}, radius, kBallMass);

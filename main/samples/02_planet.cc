@@ -20,7 +20,7 @@ constexpr Scalar kStepCos = Scalar{0.9951847f};
 constexpr Scalar kStepSin = Scalar{0.0980171f};
 
 constexpr PlanetVector ToPlanetVector(Vec2 vector) {
-  return {vector.x, vector.y};
+  return {vector.x(), vector.y()};
 }
 
 constexpr Vec2 ToVec2(PlanetVector vector) {
@@ -99,8 +99,8 @@ void PlanetSample::End() {
 
 void PlanetSample::ResetPlanets() {
   SampleRng rng{kSeed};
-  const Scalar min_radius = bounds_.Size().y * kMinOrbitFraction;
-  const Scalar max_radius = bounds_.Size().y * kMaxOrbitFraction;
+  const Scalar min_radius = bounds_.Size().y() * kMinOrbitFraction;
+  const Scalar max_radius = bounds_.Size().y() * kMaxOrbitFraction;
   for (Planet& planet : planets_) {
     planet.orbit_radius = rng.Range(min_radius, max_radius);
     planet.phase = static_cast<std::uint8_t>(rng.Range(0, kAngleSteps - 1));
