@@ -1,8 +1,10 @@
 #ifndef GPR925_VEC2_H_
 #define GPR925_VEC2_H_
 
-#include "vector2.h"
 #include "gpr925/scalar.h"
+#include "gpr925/engine_lib_number_traits.h"
+
+#include "vector2.h"
 
 namespace gpr925 {
 

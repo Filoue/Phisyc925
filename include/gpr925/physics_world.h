@@ -7,18 +7,16 @@
 #include "gpr925/engine_lib_number_traits.h"
 #include "gpr925/vec2.h"
 
-#include "vector2.h"
+#include "vec2.h"
 
 namespace gpr925 {
 
-/// Vector type used by EngineLib's math and physics algorithms.
-using Vec2 = maths::Vector2<Scalar>;
 
 /// Circular shape and contact behavior attached to a physics body.
 struct Collider {
-  Scalar radius{};                    ///< Collision radius, in meters.
-  Scalar restitution = ToScalar(1);   ///< Bounciness from zero to one.
-  int is_trigger = 0;                 ///< Nonzero for overlap-only contacts.
+  Scalar radius{};                   
+  Scalar restitution = ToScalar(1);   
+  int is_trigger = 0;
 };
 
 /// Receives pairwise contact callbacks from a @ref PhysicsWorld.
@@ -39,14 +37,14 @@ class PhysicsContactListener {
 /// A circular rigid body simulated by @ref PhysicsWorld.
 class PhysicsBody {
  public:
-  Vec2 position{};       ///< Center of the body, in meters.
-  Vec2 velocity{};       ///< Velocity, in meters per second.
-  Collider collider{};             ///< Shape and trigger/collider settings.
-  Scalar mass = ToScalar(1);      ///< Mass; ignored for static bodies.
-  bool is_static = false;          ///< Static bodies do not move.
-  std::size_t contact_started_count = 0;  ///< New contacts during latest step.
-  std::size_t touching_count = 0;        ///< Current overlapping bodies.
-  std::size_t was_touching_count = 0;     ///< Overlapping bodies last step.
+  Vec2 position{};       
+  Vec2 velocity{};       
+  Collider collider{};             
+  Scalar mass = ToScalar(1);      
+  bool is_static = false;         
+  std::size_t contact_started_count = 0;  
+  std::size_t touching_count = 0;        
+  std::size_t was_touching_count = 0;     
 
  private:
   Vec2 force_{};
@@ -72,20 +70,12 @@ class PhysicsWorld {
     bounds_ = bounds;
     has_bounds_ = true;
   }
-  /// Disables rectangular world boundaries.
   void ClearBounds() { has_bounds_ = false; }
-  /// Sets constant acceleration, in meters per second squared.
   void SetGravity(Vec2 gravity) { gravity_ = gravity; }
-  /// Sets the non-owning recipient of trigger and collider enter/exit events.
-  ///
-  /// The listener must remain alive until it is unregistered or the world is
-  /// destroyed.
   void SetContactListener(PhysicsContactListener* listener) {
     contact_listener_ = listener;
   }
-  /// Reserves body storage; call during setup to avoid simulation-time growth.
   void Reserve(std::size_t body_count) { bodies_.reserve(body_count); }
-  /// Removes all bodies and contact history while retaining allocated storage.
   void Clear() {
     bodies_.clear();
     previous_contacts_.clear();
@@ -159,13 +149,10 @@ class PhysicsWorld {
   /// @param delta_time Positive time step, in seconds.
   void Step(Scalar delta_time);
 
-  /// Returns the number of bodies.
   [[nodiscard]] std::size_t body_count() const { return bodies_.size(); }
-  /// Returns a body by its index.
   [[nodiscard]] PhysicsBody& body(std::size_t index) {
     return bodies_[index];
   }
-  /// Returns a body by its index.
   [[nodiscard]] const PhysicsBody& body(std::size_t index) const {
     return bodies_[index];
   }

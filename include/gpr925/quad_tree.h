@@ -14,6 +14,9 @@ public:
     Rectangle(Vec2 position, int width, int height) : _position(position), _width(width), _height(height) {}
     bool contains(PhysicsBody& point);
     bool intersects(Rectangle& range);
+    Vec2& getPosition() { return _position; }
+    int getWidth() { return _width; }
+    int getHeight() { return _height; } 
 private:
     Vec2 _position;
     int _width = 0;
@@ -22,11 +25,12 @@ private:
 
 class QuadTreeNode{
 public:
-    QuadTreeNode(const Rectangle& boundary, size_t count) : _boundary(boundary), _count(count) {}
+    QuadTreeNode(Rectangle& boundary, size_t count) : _boundary(boundary), _count(count) {}
     bool insert(PhysicsBody& point);
     std::vector<PhysicsBody> query(Rectangle& range, std::vector<PhysicsBody>& found);
     void subdivide();
     bool isLeaf();
+    void clear();
     Rectangle& getBoundary() { return _boundary; }
     std::vector<std::unique_ptr<QuadTreeNode>>& getChildren() { return _children; }
 
@@ -44,6 +48,7 @@ public:
     bool insert(PhysicsBody& point);
     std::vector<PhysicsBody> query(Rectangle& range, std::vector<PhysicsBody>& found);
     void clear();
+    void ReBuild(Rectangle& newBoundary, size_t newCount);
 
     std::unique_ptr<QuadTreeNode>& getRoot() { return _root; }
 

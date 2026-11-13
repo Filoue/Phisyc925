@@ -10,6 +10,7 @@
 #include "main/samples/03_planetFourVec2.h"
 #include "main/samples/04_trigger.h"
 #include "main/samples/05_Collision.h"
+#include "main/samples/06_QuadTree.h"
 #include "main/samples/sample.h"
 #include "main/samples/sample_config.h"
 
@@ -27,7 +28,9 @@ bool IsInside(Vec2 point, const Rect& bounds, Scalar margin) {
 
 TEST(SampleRegistry, StartsWithNoSampleSelected) {
   SampleRegistry registry;
-  EXPECT_GE(registry.size(), 1u);
+  ASSERT_EQ(registry.size(), 6u);
+  EXPECT_STREQ(registry.name(4), "05 Collision");
+  EXPECT_STREQ(registry.name(5), "06 QuadTree");
   EXPECT_EQ(registry.current_index(), SampleRegistry::kNone);
   EXPECT_EQ(registry.current(), nullptr);
 
@@ -526,6 +529,51 @@ TEST(CollisionSample, BallsFallAndAreGreenOnlyWhileTouching) {
   const bool fell =
       current.circles[0].center.y() > initial.circles[0].center.y();
   EXPECT_TRUE(fell);
+  EXPECT_TRUE(saw_green);
+  EXPECT_TRUE(saw_red_after_green);
+  sample.End();
+}
+
+TEST(QuadTreeSample, BallsBounceAndTheVisibleTreeUpdates) {
+  const SampleContext context{sample_config::kWorldBounds};
+  QuadTreeSample sample;
+  sample.Begin(context);
+  DrawList initial;
+  sample.Draw(initial);
+  ASSERT_EQ(initial.circles.size(), sample_config::kQuadTreeBallCount);
+  ASSERT_GT(initial.lines.size(), 0u);
+  for (const DrawCircle& ball : initial.circles) {
+    EXPECT_EQ(ball.color, sample_color::kRed);
+  }
+
+  bool saw_green = false;
+  bool saw_red_after_green = false;
+  std::vector<bool> seen_green(initial.circles.size(), false);
+  for (int step = 0; step < kStepCount; ++step) {
+    sample.FixedUpdate({});
+    DrawList current;
+    sample.Draw(current);
+    ASSERT_EQ(current.circles.size(), initial.circles.size());
+    ASSERT_GT(current.lines.size(), 0u);
+    for (std::size_t i = 0; i < current.circles.size(); ++i) {
+      const DrawCircle& ball = current.circles[i];
+      EXPECT_GE(ball.center.x(),
+                context.world_bounds.min_bound.x() + ball.radius);
+      EXPECT_LE(ball.center.x(),
+                context.world_bounds.max_bound.x() - ball.radius);
+      EXPECT_GE(ball.center.y(),
+                context.world_bounds.min_bound.y() + ball.radius);
+      EXPECT_LE(ball.center.y(),
+                context.world_bounds.max_bound.y() - ball.radius);
+
+      if (current.circles[i].color == sample_color::kGreen) {
+        seen_green[i] = true;
+        saw_green = true;
+      } else if (seen_green[i]) {
+        saw_red_after_green = true;
+      }
+    }
+  }
   EXPECT_TRUE(saw_green);
   EXPECT_TRUE(saw_red_after_green);
   sample.End();
