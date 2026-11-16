@@ -19,8 +19,7 @@ SampleRegistry::SampleRegistry() {
   samples_.push_back({"04 Trigger", std::make_unique<TriggerSample>()});
   samples_.push_back({"05 Collision", std::make_unique<CollisionSample>()});
   samples_.push_back({"06 QuadTree", std::make_unique<QuadTreeSample>()});
-  samples_.push_back(
-      {"07 Platformer (3 niveaux)", std::make_unique<PlatformerSample>()});
+  samples_.push_back({"07 Platformer (3 niveaux)", std::make_unique<PlatformerSample>()});
 }
 
 SampleRegistry::~SampleRegistry() { Select(kNone, context_); }
