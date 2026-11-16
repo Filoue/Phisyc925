@@ -28,7 +28,7 @@ inline constexpr std::size_t kTriggerBallCount = 24;
 /// Number of balls in @ref CollisionSample.
 inline constexpr std::size_t kCollisionBallCount = 128;
 /// Number of balls in @ref QuadTreeSample.
-inline constexpr std::size_t kQuadTreeBallCount = 32;
+inline constexpr std::size_t kQuadTreeBallCount = 64;
 /// @ref DrawList circle capacity reserved by the hosts.
 inline constexpr std::size_t kMaxDrawCircles = 128;
 /// @ref DrawList box capacity reserved by the hosts.

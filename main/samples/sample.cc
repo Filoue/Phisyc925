@@ -6,18 +6,21 @@
 #include "main/samples/04_trigger.h"
 #include "main/samples/05_Collision.h"
 #include "main/samples/06_QuadTree.h"
+#include "main/samples/07_platformer.h"
 
 namespace gpr925 {
 
 SampleRegistry::SampleRegistry() {
   // Register your samples here: bump the reserve and add a push_back
-  samples_.reserve(6);
+  samples_.reserve(7);
   samples_.push_back({"01 Hello", std::make_unique<HelloSample>()});
   samples_.push_back({"02 Planet", std::make_unique<PlanetSample>()});
   samples_.push_back({"03 Planet FourVec2", std::make_unique<PlanetFourVec2>()});
   samples_.push_back({"04 Trigger", std::make_unique<TriggerSample>()});
   samples_.push_back({"05 Collision", std::make_unique<CollisionSample>()});
   samples_.push_back({"06 QuadTree", std::make_unique<QuadTreeSample>()});
+  samples_.push_back(
+      {"07 Platformer (3 niveaux)", std::make_unique<PlatformerSample>()});
 }
 
 SampleRegistry::~SampleRegistry() { Select(kNone, context_); }

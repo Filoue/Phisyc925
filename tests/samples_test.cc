@@ -11,6 +11,7 @@
 #include "main/samples/04_trigger.h"
 #include "main/samples/05_Collision.h"
 #include "main/samples/06_QuadTree.h"
+#include "main/samples/07_platformer.h"
 #include "main/samples/sample.h"
 #include "main/samples/sample_config.h"
 
@@ -28,9 +29,10 @@ bool IsInside(Vec2 point, const Rect& bounds, Scalar margin) {
 
 TEST(SampleRegistry, StartsWithNoSampleSelected) {
   SampleRegistry registry;
-  ASSERT_EQ(registry.size(), 6u);
+  ASSERT_EQ(registry.size(), 7u);
   EXPECT_STREQ(registry.name(4), "05 Collision");
   EXPECT_STREQ(registry.name(5), "06 QuadTree");
+  EXPECT_STREQ(registry.name(6), "07 Platformer (3 niveaux)");
   EXPECT_EQ(registry.current_index(), SampleRegistry::kNone);
   EXPECT_EQ(registry.current(), nullptr);
 
@@ -55,6 +57,8 @@ TEST(SampleRegistry, EverySampleRunsAndDraws) {
     }
     registry.Draw(draw_list);
     EXPECT_FALSE(draw_list.empty());
+    EXPECT_EQ(draw_list.camera.min_bound, context.world_bounds.min_bound);
+    EXPECT_EQ(draw_list.camera.max_bound, context.world_bounds.max_bound);
     EXPECT_LE(draw_list.circles.size(), sample_config::kMaxDrawCircles);
     EXPECT_LE(draw_list.boxes.size(), sample_config::kMaxDrawBoxes);
     EXPECT_LE(draw_list.lines.size(), sample_config::kMaxDrawLines);
@@ -136,6 +140,38 @@ TEST(HelloSample, APressChangesThePlayerColorOnce) {
   draw_list.Clear();
   sample.Draw(draw_list);
   EXPECT_EQ(draw_list.circles.back().color, initial + 1);
+  sample.End();
+}
+
+TEST(PlatformerSample, JumpLandsOnTheFixedCameraLevel) {
+  const SampleContext context{sample_config::kWorldBounds};
+  PlatformerSample sample;
+  sample.Begin(context);
+  DrawList draw_list;
+
+  for (int step = 0; step < 60; ++step) {
+    sample.FixedUpdate({});
+  }
+  sample.Draw(draw_list);
+  const Vec2 start = draw_list.boxes[draw_list.boxes.size() - 4].center;
+
+  sample.FixedUpdate(
+      Input::FromHeld(ButtonMask(Button::kA), 0));
+  for (int step = 0; step < 10; ++step) {
+    sample.FixedUpdate({});
+  }
+  draw_list.Clear();
+  sample.Draw(draw_list);
+  const Vec2 airborne = draw_list.boxes[draw_list.boxes.size() - 4].center;
+  EXPECT_LT(airborne.y(), start.y());
+
+  for (int step = 0; step < 120; ++step) {
+    sample.FixedUpdate({});
+  }
+  draw_list.Clear();
+  sample.Draw(draw_list);
+  const Vec2 landed = draw_list.boxes[draw_list.boxes.size() - 4].center;
+  EXPECT_EQ(landed.y(), start.y());
   sample.End();
 }
 
