@@ -20,10 +20,10 @@ using FourVec2 = maths::FourVector2<Scalar>;
 using EngineVec2 = maths::Vector2<Scalar>;
 
 FourVec2 GravityAcceleration(const FourVec2& positions) {
-  const std::array<Scalar, 4> x = positions.Xs();
-  const std::array<Scalar, 4> y = positions.Ys();
+  const std::array<Scalar, 4> x = positions.Xs().Scalars();
+  const std::array<Scalar, 4> y = positions.Ys().Scalars();
   const std::array<Scalar, 4> distance_squared =
-      FourVec2::Dot(positions, positions);
+      FourVec2::Dot(positions, positions).Scalars();
 
   std::array<Scalar, 4> acceleration_x{};
   std::array<Scalar, 4> acceleration_y{};
@@ -80,8 +80,10 @@ void PlanetFourVec2::FixedUpdate(const Input& input) {
 
 void PlanetFourVec2::Draw(DrawList& draw_list) const {
   for (std::size_t batch = 0; batch < kBatchCount; ++batch) {
-    const std::array<Scalar, kBatchSize> x = positions_[batch].Xs();
-    const std::array<Scalar, kBatchSize> y = positions_[batch].Ys();
+    const std::array<Scalar, kBatchSize> x =
+        positions_[batch].Xs().Scalars();
+    const std::array<Scalar, kBatchSize> y =
+        positions_[batch].Ys().Scalars();
     for (std::size_t lane = 0; lane < kBatchSize; ++lane) {
       const std::size_t planet = batch * kBatchSize + lane;
       const EngineVec2 world_position =

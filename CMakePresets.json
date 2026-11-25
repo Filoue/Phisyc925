@@ -41,6 +41,21 @@
       "cacheVariables": { "CMAKE_BUILD_TYPE": "RelWithDebInfo" }
     },
     {
+      "name": "benchmark",
+      "displayName": "QuadTree benchmark (Release)",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/${presetName}-local",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "GPR925_SCALAR": "FLOAT",
+        "GPR925_WARNINGS_AS_ERRORS": "ON",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+        "USE_SAMPLES": "OFF",
+        "USE_TESTING": "OFF",
+        "USE_BENCHMARKS": "ON"
+      }
+    },
+    {
       "name": "nds",
       "displayName": "Nintendo DS samples ROM (devkitARM, needs DEVKITPRO)",
       "generator": "Ninja",
@@ -60,6 +75,7 @@
     { "name": "debug-fixed", "configurePreset": "debug-fixed" },
     { "name": "release", "configurePreset": "release" },
     { "name": "relwithdebinfo", "configurePreset": "relwithdebinfo" },
+    { "name": "benchmark", "configurePreset": "benchmark" },
     { "name": "nds", "configurePreset": "nds" }
   ],
   "testPresets": [

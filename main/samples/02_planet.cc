@@ -41,7 +41,7 @@ PlanetVector Normalize(PlanetVector direction) {
   return {direction.x() / length, direction.y() / length};
 }
 
-constexpr PlanetVector DirectionAt(std::uint8_t phase) {
+PlanetVector DirectionAt(std::uint8_t phase) {
   PlanetVector direction{ToScalar(1), Scalar{}};
   for (std::uint8_t step = 0; step < phase; ++step) {
     direction = RotateOneStep(direction);

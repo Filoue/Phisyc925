@@ -8,6 +8,7 @@ option(USE_TESTING "Build the unit tests (GoogleTest)" OFF)
 if(USE_TESTING)
     list(APPEND VCPKG_MANIFEST_FEATURES "tests")
 endif()
+option(USE_BENCHMARKS "Build local performance benchmarks" OFF)
 
 project(Gpr925Physics LANGUAGES CXX)
 
@@ -51,11 +52,14 @@ endfunction()
 
 # EngineLib (the shared maths library, a git submodule) follows our warnings-as-errors setting. Its warning flags are
 # INTERFACE: they apply to every target that links it.
-if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/externals/EngineLib/CMakeLists.txt")
+set(WARNINGS_AS_ERRORS ${GPR925_WARNINGS_AS_ERRORS} CACHE BOOL "Treat compiler warnings as errors" FORCE)
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/externals/EngineLib/CMakeLists.txt")
+    add_subdirectory(externals/EngineLib)
+elseif(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/externals/EngineLib/GPR925_EngineLib/CMakeLists.txt")
+    add_subdirectory(externals/EngineLib/GPR925_EngineLib)
+else()
     message(FATAL_ERROR "externals/EngineLib is empty: run 'git submodule update --init --recursive'")
 endif()
-set(WARNINGS_AS_ERRORS ${GPR925_WARNINGS_AS_ERRORS} CACHE BOOL "Treat compiler warnings as errors" FORCE)
-add_subdirectory(externals/EngineLib)
 
 # The engine: your physics code goes in include/gpr925 and src
 file(GLOB_RECURSE SRC_FILES CONFIGURE_DEPENDS src/*.cc include/*.h)
@@ -101,6 +105,12 @@ if(USE_TESTING)
         set_target_properties(${TEST_NAME} PROPERTIES FOLDER Tests/)
         gtest_discover_tests(${TEST_NAME})
     endforeach()
+endif()
+
+if(USE_BENCHMARKS)
+    add_executable(quad_tree_benchmark benchmarks/quad_tree_benchmark.cc)
+    target_link_libraries(quad_tree_benchmark PRIVATE Gpr925Physics)
+    gpr925_set_project_warnings(quad_tree_benchmark)
 endif()
 
 if(GPR925_NDS)

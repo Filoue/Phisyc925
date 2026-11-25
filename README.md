@@ -49,6 +49,20 @@ build/debug/Gpr925Sample
 In CLion, open the folder and enable the `debug` preset in *Settings > Build >
 CMake*.
 
+## Benchmark the QuadTree
+
+Configure and build the standalone benchmark with the `benchmark` preset, then
+run `build/benchmark-local/quad_tree_benchmark`. It reports median tree rebuild time
+(clear plus insert) and median query time against a linear scan for 64, 256,
+1024 and 4096 points. The input and query locations use fixed seeds; the
+benchmark checks that both query methods return the same points before timing.
+Use a Release build and record the machine and compiler when sharing results.
+
+The benchmark measures the QuadTree API in isolation; it does not represent
+the full interactive sample or rendering cost.
+See [the benchmark flow and optimization candidates](benchmarks/quad_tree_analysis.md)
+for a diagram of the measured paths and functions to investigate.
+
 Controls: arrow keys for the D-pad, and the DS diamond on `E` (X), `S` (Y),
 `D` (B), `F` (A): keys that are at the same place on US, Swiss and French
 keyboards. A gamepad works too, with the buttons at their DS positions.
